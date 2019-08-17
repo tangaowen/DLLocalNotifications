@@ -54,7 +54,7 @@ public class DLNotificationScheduler {
         }
         notification.scheduled = false
         
-        saveQueue()
+        //saveQueue()
     }
     
     public func getScheduledNotification(with identifier: String, handler:@escaping (_ request:UNNotificationRequest?)-> Void) {

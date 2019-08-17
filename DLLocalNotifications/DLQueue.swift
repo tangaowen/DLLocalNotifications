@@ -37,10 +37,10 @@ class DLQueue: NSObject {
             return noti1.trigger!.nextTriggerDate()! < noti2.trigger!.nextTriggerDate()!
         }
         
-        let saveSuccessed = save()
-        if saveSuccessed == false {
-            print("svae DLLocalNotification Queue failed")
-        }
+//        let saveSuccessed = save()
+//        if saveSuccessed == false {
+//            print("svae DLLocalNotification Queue failed")
+//        }
     }
     
     /// Finds the position at which the new DLNotification is inserted in the queue.
