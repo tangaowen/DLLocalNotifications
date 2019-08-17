@@ -53,6 +53,8 @@ public class DLNotificationScheduler {
             i += 1
         }
         notification.scheduled = false
+        
+        saveQueue()
     }
     
     public func getScheduledNotification(with identifier: String, handler:@escaping (_ request:UNNotificationRequest?)-> Void) {
@@ -265,6 +267,8 @@ public class DLNotificationScheduler {
     
     ///Persists the notifications queue to the disk
     ///> Call this method whenever you need to save changes done to the queue and/or before terminating the app.
+    
+    @discardableResult
     public func saveQueue() -> Bool {
         return DLQueue.queue.save()
     }
