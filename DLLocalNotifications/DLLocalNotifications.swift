@@ -143,98 +143,124 @@ public class DLNotificationScheduler {
         return newComponents
     }
     
+    @discardableResult
     fileprivate func queueNotification (notification: DLNotification) -> String? {
-        
-        if notification.scheduled {
-            return nil
-        } else {
-            DLQueue.queue.push(notification)
-        }
+        DLQueue.queue.push(notification)
+        DLQueue.queue.reSort()
         
         return notification.identifier
     }
     
     public func scheduleNotification ( notification: DLNotification) {
-        
         queueNotification(notification: notification)
-        
     }
     
-    
-    public func scheduleAllNotifications () {
+    public func reScheduleAllNotifications() {
         
-        let queue = DLQueue.queue.notificationsQueue()
+        UNUserNotificationCenter.current().getPendingNotificationRequests(completionHandler: { (requests) in
+            DLQueue.queue.reSort()
+            
+            //get first 60 next schedule notification first
+            var nextScheduleNotifications : [DLNotification] = []
+            let allNotifications = self.notificationsQueue()
+            if allNotifications.count < 60 {
+                nextScheduleNotifications = allNotifications
+            }
+            else {
+                nextScheduleNotifications = Array(allNotifications[0..<60])
+            }
+            
+            var requestNeedsUnSchedule : [UNNotificationRequest] = []
+            var identifysNeedsUnSchedule : [String] = []
+            let oldScheduleRequestCount = requests.count
+            print("cur pending request count = ",requests.count)
+            for request  in  requests {
+                if let requestTrigger =  request.trigger as?  UNCalendarNotificationTrigger {
+                    if(requestTrigger.repeats) {
+                        print(requestTrigger)
+                        print("Calendar notification: \(requestTrigger.nextTriggerDate().debugDescription) and repeats")
+                    } else {
+                        print("Calendar notification: \(requestTrigger.nextTriggerDate().debugDescription) does not repeat")
+                    }
+                    
+                    let findNotificationOpt = nextScheduleNotifications.first(where: { (notification) -> Bool in
+                        if notification.identifier == request.identifier {
+                            return true
+                        }
+                        else {
+                            return false
+                        }
+                    })
+                    
+                    //没有在60 个接下来要schedule 的 notification 中，那么需要先 unSchedule.
+                    if findNotificationOpt == nil {
+                        requestNeedsUnSchedule.append(request)
+                        identifysNeedsUnSchedule.append(request.identifier)
+                    }
+                }
+            }
+            
+            //unSchedule 低优先级的 request
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifysNeedsUnSchedule)
+            
+            var newScheduleNotificationCount = 60 - oldScheduleRequestCount + requestNeedsUnSchedule.count > 0 ?  60 - oldScheduleRequestCount + requestNeedsUnSchedule.count : 0
+            
+            //Schedule 新的 notifications
+            var newScheduleCount = 0
+            for notification in nextScheduleNotifications {
+                if newScheduleCount >= newScheduleNotificationCount {
+                    break
+                }
+                
+                let findRequestOpt = requests.first(where: { (request) -> Bool in
+                    if request.identifier == notification.identifier {
+                        return true
+                    }
+                    else {
+                        return false
+                    }
+                })
+                
+                //if not scheduled
+                if findRequestOpt == nil {
+                    self.scheduleNotificationInternal(notification: notification)
+                    newScheduleCount += 1
+                }
+            }
+            
+        })
         
-        var count = 0
-        for _ in queue {
-            
-            if count < min(DLNotificationScheduler.maximumScheduledNotifications, MAX_ALLOWED_NOTIFICATIONS) {
-                let popped = DLQueue.queue.pop()
-                scheduleNotificationInternal(notification: popped)
-                count += 1
-            } else { break }
-            
-        }
     }
     
     // Refactored for backwards compatability
+    @discardableResult
     fileprivate func scheduleNotificationInternal ( notification: DLNotification) -> String? {
+    
+        let content = UNMutableNotificationContent()
+        content.title = notification.alertTitle!
+        content.body = notification.alertBody!
+        content.sound = notification.soundName == "" ? UNNotificationSound.default : UNNotificationSound.init(named: UNNotificationSoundName(rawValue: notification.soundName))
         
-        if notification.scheduled {
-            return nil
-        } else {
-            
-            var trigger: UNNotificationTrigger
-            
-            if (notification.region != nil) {
-                trigger = UNLocationNotificationTrigger(region: notification.region!, repeats: false)
-                if (notification.repeatInterval == .hourly) {
-                    trigger = UNTimeIntervalNotificationTrigger.init(timeInterval: (TimeInterval(3600)), repeats: false)
-                    
-                }
-                
-            } else {
-                
-                trigger = UNCalendarNotificationTrigger(dateMatching: convertToNotificationDateComponent(notification: notification, repeatInterval: notification.repeatInterval), repeats: notification.repeats)
-                /*
-                if (notification.repeatInterval == .hourly) {
-                    trigger = UNTimeIntervalNotificationTrigger.init(timeInterval: (TimeInterval(3600)), repeats: false)
-                    
-                }
- */
-                
+        
+        if (notification.soundName == "1") { content.sound = nil}
+        
+        if !(notification.attachments == nil) { content.attachments = notification.attachments! }
+        
+        if !(notification.launchImageName == nil) { content.launchImageName = notification.launchImageName! }
+        
+        if !(notification.category == nil) { content.categoryIdentifier = notification.category! }
+        
+        notification.localNotificationRequest = UNNotificationRequest(identifier: notification.identifier!, content: content, trigger: notification.trigger)
+        
+        let center = UNUserNotificationCenter.current()
+        center.add(notification.localNotificationRequest!, withCompletionHandler: {(error) in
+            if error != nil {
+                print(error.debugDescription)
             }
-            let content = UNMutableNotificationContent()
-            
-            content.title = notification.alertTitle!
-            
-            content.body = notification.alertBody!
-            
-            content.sound = notification.soundName == "" ? UNNotificationSound.default : UNNotificationSound.init(named: UNNotificationSoundName(rawValue: notification.soundName))
-
-            
-            if (notification.soundName == "1") { content.sound = nil}
-            
-            if !(notification.attachments == nil) { content.attachments = notification.attachments! }
-            
-            if !(notification.launchImageName == nil) { content.launchImageName = notification.launchImageName! }
-            
-            if !(notification.category == nil) { content.categoryIdentifier = notification.category! }
-            
-            notification.localNotificationRequest = UNNotificationRequest(identifier: notification.identifier!, content: content, trigger: trigger)
-            
-            let center = UNUserNotificationCenter.current()
-            center.add(notification.localNotificationRequest!, withCompletionHandler: {(error) in
-                if error != nil {
-                    print(error.debugDescription)
-                }
-            })
-            
-            notification.scheduled = true
-        }
+        })
         
+        notification.scheduled = true
         return notification.identifier
-        
     }
     
     ///Persists the notifications queue to the disk

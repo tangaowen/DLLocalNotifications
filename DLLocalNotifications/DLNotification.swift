@@ -15,6 +15,7 @@ public class DLNotification {
     
     // Contains the internal instance of the notification
     internal var localNotificationRequest: UNNotificationRequest?
+    internal var trigger : UNCalendarNotificationTrigger? = nil
     
     // Holds the repeat interval of the notification with Enum Type Repeats
     var repeatInterval: RepeatingInterval = .none
@@ -97,6 +98,7 @@ public class DLNotification {
             self.repeats = true
         }
         
+        initTrigger()
     }
     
     public init (identifier: String, alertTitle: String, alertBody: String, date: Date?, repeats: RepeatingInterval, soundName: String ) {
@@ -114,6 +116,7 @@ public class DLNotification {
             self.repeats = true
         }
         
+        initTrigger()
     }
     
     // Region based notification
@@ -128,6 +131,37 @@ public class DLNotification {
         region?.notifyOnEntry = true
         self.region = region
         
+    }
+    
+    func initTrigger() {
+        self.trigger = UNCalendarNotificationTrigger(dateMatching: convertToDateComponent(), repeats: self.repeats)
+    }
+    
+    func convertToDateComponent () -> DateComponents {
+        
+        var newComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second ], from: self.fireDate!)
+        
+        if repeatInterval != .none {
+            
+            switch repeatInterval {
+            case .minute:
+                newComponents = Calendar.current.dateComponents([ .second], from: self.fireDate!)
+            case .hourly:
+                newComponents = Calendar.current.dateComponents([ .minute], from: self.fireDate!)
+            case .daily:
+                newComponents = Calendar.current.dateComponents([.hour, .minute], from: self.fireDate!)
+            case .weekly:
+                newComponents = Calendar.current.dateComponents([.hour, .minute, .weekday], from: self.fireDate!)
+            case .monthly:
+                newComponents = Calendar.current.dateComponents([.hour, .minute, .day], from: self.fireDate!)
+            case .yearly:
+                newComponents = Calendar.current.dateComponents([.hour, .minute, .day, .month], from: self.fireDate!)
+            default:
+                break
+            }
+        }
+        
+        return newComponents
     }
 
     init(from decoder: Decoder) throws {
@@ -145,6 +179,8 @@ public class DLNotification {
         self.launchImageName = try container.decodeIfPresent(String.self, forKey: .launchImageName)
         self.category = try container.decodeIfPresent(String.self, forKey: .category)
         self.hasDataFromBefore = try container.decode(Bool.self, forKey: .hasDataFromBefore)
+        
+        initTrigger()
     }
     func encode(to encoder: Encoder) throws
     {

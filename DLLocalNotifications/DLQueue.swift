@@ -23,7 +23,24 @@ class DLQueue: NSObject {
     }
     
     internal func push(_ notification: DLNotification) {
-        notifQueue.insert(notification, at: findInsertionPoint(notification))
+        notifQueue.append(notification)
+    }
+    
+    func reSort() {
+        notifQueue.sort { (noti1, noti2) -> Bool in
+            if noti1.trigger?.nextTriggerDate() == nil {
+                return false
+            }
+            if noti2.trigger?.nextTriggerDate() == nil {
+                return true
+            }
+            return noti1.trigger!.nextTriggerDate()! < noti2.trigger!.nextTriggerDate()!
+        }
+        
+        let saveSuccessed = save()
+        if saveSuccessed == false {
+            print("svae DLLocalNotification Queue failed")
+        }
     }
     
     /// Finds the position at which the new DLNotification is inserted in the queue.
