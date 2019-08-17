@@ -25,6 +25,7 @@ public class DLNotificationScheduler {
         DLQueue.queue.clear()
         saveQueue()
         
+        print("cancelAllNotifications")
     }
     
     
