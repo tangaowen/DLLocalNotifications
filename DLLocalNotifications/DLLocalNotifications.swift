@@ -221,6 +221,7 @@ public class DLNotificationScheduler {
                     if nowRuntimeScheduledCount >= 60 {
                         if identifysUnScheduleCadidates.count > 0 {
                             let unScheduleIdentify : String = identifysUnScheduleCadidates.first!
+                            identifysUnScheduleCadidates.removeFirst()
                             UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [unScheduleIdentify])
                             
                             self.scheduleNotificationInternal(notification: notification)
