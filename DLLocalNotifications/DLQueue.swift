@@ -6,11 +6,12 @@
 //  Copyright © 2018 Devesh Laungani. All rights reserved.
 //
 
+import Foundation
 
 @available(iOS 10.0, *)
 public
-class DLQueue: NSObject {
-    
+class DLQueue: NSObject, NSCoding {
+
     internal var notifQueue = [DLNotification]()
     static let queue = DLQueue()
     let ArchiveURL = FileManager().urls(for: .documentDirectory, in: .userDomainMask).first!.appendingPathComponent("notifications.dlqueue")
@@ -20,6 +21,16 @@ class DLQueue: NSObject {
         if let notificationQueue = self.load() {
             notifQueue = notificationQueue
         }
+    }
+    
+    public func encode(with aCoder: NSCoder) {
+        aCoder.encode(notifQueue, forKey: "DLQueue")
+    }
+    
+    public required init?(coder aDecoder: NSCoder) {
+        self.notifQueue = aDecoder.decodeObject(forKey: "DLQueue") as! [DLNotification]
+        
+        super.init()
     }
     
     internal func push(_ notification: DLNotification) {
@@ -37,10 +48,13 @@ class DLQueue: NSObject {
             return noti1.trigger!.nextTriggerDate()! < noti2.trigger!.nextTriggerDate()!
         }
         
-//        let saveSuccessed = save()
-//        if saveSuccessed == false {
-//            print("svae DLLocalNotification Queue failed")
-//        }
+        let saveSuccessed = save()
+        if saveSuccessed == false {
+            print("svae DLLocalNotification Queue failed")
+        }
+        else {
+            print("svae DLLocalNotification Queue successed")
+        }
     }
     
     /// Finds the position at which the new DLNotification is inserted in the queue.
@@ -112,7 +126,7 @@ class DLQueue: NSObject {
     ///Save queue on disk.
     
     internal func save() -> Bool {
-        return NSKeyedArchiver.archiveRootObject(self.notifQueue, toFile: ArchiveURL.path)
+        return NSKeyedArchiver.archiveRootObject(self, toFile: ArchiveURL.path)
     }
     
     ///Load queue from disk.
@@ -120,7 +134,13 @@ class DLQueue: NSObject {
     ///You do not need to manually call this method
     
     internal func load() -> [DLNotification]? {
-        return NSKeyedUnarchiver.unarchiveObject(withFile: ArchiveURL.path) as? [DLNotification]
+        let savedQueue = NSKeyedUnarchiver.unarchiveObject(withFile: ArchiveURL.path) as? DLQueue
+        if savedQueue != nil {
+            return savedQueue?.notifQueue
+        }
+        else {
+            return nil
+        }
     }
     
 }

@@ -11,7 +11,40 @@ import UserNotifications
 import MapKit
 
 @available(iOS 10.0, *)
-public class DLNotification {
+public class DLNotification : NSObject, NSCoding {
+    public func encode(with aCoder: NSCoder) {
+        aCoder.encode(repeatInterval.rawValue, forKey: CodingKeys.repeatInterval.rawValue)
+        aCoder.encode(alertTitle, forKey: CodingKeys.alertTitle.rawValue)
+        aCoder.encode(alertBody, forKey: CodingKeys.alertBody.rawValue)
+        aCoder.encode(soundName, forKey: CodingKeys.soundName.rawValue)
+        aCoder.encode(fireDate, forKey: CodingKeys.fireDate.rawValue)
+        aCoder.encode(repeats, forKey: CodingKeys.repeats.rawValue)
+        aCoder.encode(scheduled, forKey: CodingKeys.scheduled.rawValue)
+        aCoder.encode(identifier, forKey: CodingKeys.identifier.rawValue)
+        aCoder.encode(launchImageName, forKey: CodingKeys.launchImageName.rawValue)
+        aCoder.encode(category, forKey: CodingKeys.category.rawValue)
+        aCoder.encode(hasDataFromBefore, forKey: CodingKeys.hasDataFromBefore.rawValue)
+    }
+    
+    public required init?(coder aDecoder: NSCoder) {
+        super.init()
+        
+        let repeatString = aDecoder.decodeObject(forKey: CodingKeys.repeatInterval.rawValue) as! String
+        self.repeatInterval = RepeatingInterval(rawValue: repeatString)!
+        self.alertTitle = aDecoder.decodeObject(forKey: CodingKeys.alertTitle.rawValue) as? String
+        self.alertBody = aDecoder.decodeObject(forKey: CodingKeys.alertBody.rawValue) as? String
+        self.soundName =  aDecoder.decodeObject(forKey: CodingKeys.soundName.rawValue) as! String
+        self.fireDate = aDecoder.decodeObject(forKey: CodingKeys.fireDate.rawValue) as? Date
+        self.repeats = aDecoder.decodeBool(forKey: CodingKeys.repeats.rawValue) as! Bool
+        self.scheduled = aDecoder.decodeBool(forKey: CodingKeys.scheduled.rawValue) as! Bool
+        self.identifier = aDecoder.decodeObject(forKey: CodingKeys.identifier.rawValue) as? String
+        self.launchImageName = aDecoder.decodeObject(forKey: CodingKeys.launchImageName.rawValue) as? String
+        self.category = aDecoder.decodeObject(forKey: CodingKeys.category.rawValue) as? String
+        self.hasDataFromBefore = aDecoder.decodeBool(forKey: CodingKeys.hasDataFromBefore.rawValue) as! Bool
+        
+        initTrigger()
+    }
+    
     
     // Contains the internal instance of the notification
     internal var localNotificationRequest: UNNotificationRequest?
@@ -86,6 +119,7 @@ public class DLNotification {
     }
     
     public init (identifier: String, alertTitle: String, alertBody: String, date: Date?, repeats: RepeatingInterval ) {
+        super.init()
         
         self.alertBody = alertBody
         self.alertTitle = alertTitle
@@ -102,6 +136,7 @@ public class DLNotification {
     }
     
     public init (identifier: String, alertTitle: String, alertBody: String, date: Date?, repeats: RepeatingInterval, soundName: String ) {
+        super.init()
         
         self.alertBody = alertBody
         self.alertTitle = alertTitle
@@ -164,43 +199,45 @@ public class DLNotification {
         return newComponents
     }
 
-    init(from decoder: Decoder) throws {
-        
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let repeatString = try container.decode(String.self, forKey: .repeatInterval)
-        self.repeatInterval = RepeatingInterval(rawValue: repeatString)!
-        self.alertTitle = try container.decodeIfPresent(String.self, forKey: .alertTitle)
-        self.alertBody = try container.decodeIfPresent(String.self, forKey: .alertBody)
-        self.soundName =  try container.decode(String.self, forKey: .soundName)
-        self.fireDate = try container.decodeIfPresent(Date.self, forKey: .fireDate)
-        self.repeats = try container.decode(Bool.self, forKey: .repeats)
-        self.scheduled = try container.decode(Bool.self, forKey: .scheduled)
-        self.identifier = try container.decodeIfPresent(String.self, forKey: .identifier)
-        self.launchImageName = try container.decodeIfPresent(String.self, forKey: .launchImageName)
-        self.category = try container.decodeIfPresent(String.self, forKey: .category)
-        self.hasDataFromBefore = try container.decode(Bool.self, forKey: .hasDataFromBefore)
-        
-        initTrigger()
-    }
-    func encode(to encoder: Encoder) throws
-    {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        
-        
-        try container.encode(repeatInterval.rawValue, forKey: CodingKeys.repeatInterval)
-        try container.encode(alertTitle, forKey: .alertTitle)
-        try container.encode(alertBody, forKey: .alertBody)
-        try container.encode(soundName, forKey: .soundName)
-        try container.encode(fireDate, forKey: .fireDate)
-        try container.encode(repeats, forKey: .repeats)
-        try container.encode(scheduled, forKey: .scheduled)
-        try container.encode(identifier, forKey: .identifier)
-        try container.encode(launchImageName, forKey: .launchImageName)
-        try container.encode(category, forKey: .category)
-        try container.encode(hasDataFromBefore, forKey: .hasDataFromBefore)
-    }
+//    init(from decoder: Decoder) throws {
+//
+//        super.init()
+//
+//        let container = try decoder.container(keyedBy: CodingKeys.self)
+//        let repeatString = try container.decode(String.self, forKey: .repeatInterval)
+//        self.repeatInterval = RepeatingInterval(rawValue: repeatString)!
+//        self.alertTitle = try container.decodeIfPresent(String.self, forKey: .alertTitle)
+//        self.alertBody = try container.decodeIfPresent(String.self, forKey: .alertBody)
+//        self.soundName =  try container.decode(String.self, forKey: .soundName)
+//        self.fireDate = try container.decodeIfPresent(Date.self, forKey: .fireDate)
+//        self.repeats = try container.decode(Bool.self, forKey: .repeats)
+//        self.scheduled = try container.decode(Bool.self, forKey: .scheduled)
+//        self.identifier = try container.decodeIfPresent(String.self, forKey: .identifier)
+//        self.launchImageName = try container.decodeIfPresent(String.self, forKey: .launchImageName)
+//        self.category = try container.decodeIfPresent(String.self, forKey: .category)
+//        self.hasDataFromBefore = try container.decode(Bool.self, forKey: .hasDataFromBefore)
+//
+//        initTrigger()
+//    }
+//    func encode(to encoder: Encoder) throws
+//    {
+//        var container = encoder.container(keyedBy: CodingKeys.self)
+//
+//
+//        try container.encode(repeatInterval.rawValue, forKey: CodingKeys.repeatInterval)
+//        try container.encode(alertTitle, forKey: .alertTitle)
+//        try container.encode(alertBody, forKey: .alertBody)
+//        try container.encode(soundName, forKey: .soundName)
+//        try container.encode(fireDate, forKey: .fireDate)
+//        try container.encode(repeats, forKey: .repeats)
+//        try container.encode(scheduled, forKey: .scheduled)
+//        try container.encode(identifier, forKey: .identifier)
+//        try container.encode(launchImageName, forKey: .launchImageName)
+//        try container.encode(category, forKey: .category)
+//        try container.encode(hasDataFromBefore, forKey: .hasDataFromBefore)
+//    }
     
-    public var debugDescription : String {
+    override public var debugDescription : String {
         
         return "<DLNotification Identifier: " + self.identifier!  + " Title: " + self.alertTitle! + ">"
     }
