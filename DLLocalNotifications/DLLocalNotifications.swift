@@ -249,7 +249,7 @@ public class DLNotificationScheduler {
                     print("no : \(scheduleIndex) notification is already schedule before, do nothing")
                 }
                 
-                scheduleIndex += 1
+                scheduleIndex = scheduleIndex + 1
             }
             
             print("now \(alreadyScheduleRequestCount) notifications scheduled")
