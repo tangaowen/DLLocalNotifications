@@ -224,6 +224,8 @@ public class DLNotificationScheduler {
                 })
                 
                 //if not scheduled, Schedule new notification
+                print("no : \(scheduleIndex) notification, details = \(notification.debugDescription) , triggrTime = \(notification.trigger?.nextTriggerDate()?.description(with: .current))")
+                
                 if findRequestOpt == nil {
                     print("no : \(scheduleIndex) notification not scheduled before")
                     //if the alreadyScheduleRequestCount >= 60, not unSchedule
