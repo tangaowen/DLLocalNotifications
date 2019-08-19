@@ -172,11 +172,33 @@ public class DLNotificationScheduler {
                 nextScheduleNotifications = Array(allNotifications[0..<60])
             }
             
-            var requestUnScheduleCadidates : [UNNotificationRequest] = []
-            var identifysUnScheduleCadidates : [String] = []
-            let oldScheduleRequestCount = requests.count
+            var alreadyScheduleRequestCount = requests.count
             print("cur pending request count = ",requests.count)
-            for request  in  requests {
+            
+            //sort pending requests by trigger date
+            var sortedRequests = requests.sorted(by: { (request1, request2) -> Bool in
+                let requestTrigger1 =  request1.trigger as?  UNCalendarNotificationTrigger
+                let requestTrigger2 =  request2.trigger as?  UNCalendarNotificationTrigger
+                if requestTrigger1?.nextTriggerDate() == nil {
+                    return false
+                }
+                else if requestTrigger2?.nextTriggerDate() == nil {
+                    return true
+                }
+                else {
+                    if requestTrigger1!.nextTriggerDate()! <= requestTrigger2!.nextTriggerDate()! {
+                        return true
+                    }
+                    else {
+                        return false
+                    }
+                }
+            })
+            
+            var unScheduleCadidatesRequest : [UNNotificationRequest] = [UNNotificationRequest](sortedRequests)
+            
+            //only for debug output
+            for request  in  sortedRequests {
                 if let requestTrigger =  request.trigger as?  UNCalendarNotificationTrigger {
                     if(requestTrigger.repeats) {
                         print(requestTrigger)
@@ -184,26 +206,12 @@ public class DLNotificationScheduler {
                     } else {
                         print("Calendar notification: \(requestTrigger.nextTriggerDate().debugDescription) does not repeat")
                     }
-                    
-                    let findNotificationOpt = nextScheduleNotifications.first(where: { (notification) -> Bool in
-                        if notification.identifier == request.identifier {
-                            return true
-                        }
-                        else {
-                            return false
-                        }
-                    })
-                    
-                    //没有在60 个接下来要schedule 的 notification 中，那么 保存可以 unSchedule 的cadidates
-                    if findNotificationOpt == nil {
-                        requestUnScheduleCadidates.append(request)
-                        identifysUnScheduleCadidates.append(request.identifier)
-                    }
                 }
             }
             
             //Schedule 新的 notifications
-            var nowRuntimeScheduledCount : Int = oldScheduleRequestCount
+            print("have \(nextScheduleNotifications.count) notifications to be schedule")
+            var scheduleIndex = 1
             for notification in nextScheduleNotifications {
                 
                 let findRequestOpt = requests.first(where: { (request) -> Bool in
@@ -217,29 +225,33 @@ public class DLNotificationScheduler {
                 
                 //if not scheduled, Schedule new notification
                 if findRequestOpt == nil {
-                    //if the nowRuntineScheduledCount >= 60, not unSchedule
-                    if nowRuntimeScheduledCount >= 60 {
-                        if identifysUnScheduleCadidates.count > 0 {
-                            let unScheduleIdentify : String = identifysUnScheduleCadidates.first!
-                            identifysUnScheduleCadidates.removeFirst()
-                            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [unScheduleIdentify])
+                    print("no : \(scheduleIndex) notification not scheduled before")
+                    //if the alreadyScheduleRequestCount >= 60, not unSchedule
+                    if alreadyScheduleRequestCount >= 60 {
+                        //unSchedule last request in unScheduleCadidatesRequest
+                        let unScheduleIdentify : String = unScheduleCadidatesRequest.last!.identifier
+                        unScheduleCadidatesRequest.removeLast()
+                    UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [unScheduleIdentify])
                             
-                            self.scheduleNotificationInternal(notification: notification)
-                        }
-                        else {
-                            break
-                        }
+                        self.scheduleNotificationInternal(notification: notification)
+                        
+                        print("no : \(scheduleIndex) notification replace a scheduled notificaiton , then scheduled")
                     }
                     else {
-                        //if nowRuntime count is < 60 , just schedule
-                        nowRuntimeScheduledCount += 1
+                        //if alreadyScheduleRequestCount count is < 60 , just schedule
+                        alreadyScheduleRequestCount += 1
                         self.scheduleNotificationInternal(notification: notification)
+                        
+                        print("no : \(scheduleIndex) notification , new add scheduled")
                     }
+                }
+                else {
+                    print("no : \(scheduleIndex) notification is already schedule before, do nothing")
                 }
             }
             
+            print("now \(alreadyScheduleRequestCount) notifications scheduled")
         })
-        
     }
     
     // Refactored for backwards compatability

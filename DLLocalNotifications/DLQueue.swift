@@ -19,6 +19,7 @@ class DLQueue: NSObject, NSCoding {
     override init() {
         super.init()
         if let notificationQueue = self.load() {
+            print("Queue : Load \(notificationQueue.count) notifications from archive")
             notifQueue = notificationQueue
         }
     }
