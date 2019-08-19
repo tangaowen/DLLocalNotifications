@@ -248,6 +248,8 @@ public class DLNotificationScheduler {
                 else {
                     print("no : \(scheduleIndex) notification is already schedule before, do nothing")
                 }
+                
+                scheduleIndex += 1
             }
             
             print("now \(alreadyScheduleRequestCount) notifications scheduled")
