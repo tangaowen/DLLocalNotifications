@@ -202,9 +202,9 @@ public class DLNotificationScheduler {
                 if let requestTrigger =  request.trigger as?  UNCalendarNotificationTrigger {
                     if(requestTrigger.repeats) {
                         print(requestTrigger)
-                        print("Calendar notification: \(requestTrigger.nextTriggerDate().debugDescription) and repeats")
+                        print("Calendar notification: \(requestTrigger.nextTriggerDate().debugDescription), title = \(request.content.title), and content = \(request.content.body), and repeats")
                     } else {
-                        print("Calendar notification: \(requestTrigger.nextTriggerDate().debugDescription) does not repeat")
+                        print("Calendar notification: \(requestTrigger.nextTriggerDate().debugDescription), title = \(request.content.title), and content = \(request.content.body), does not repeat")
                     }
                 }
             }
