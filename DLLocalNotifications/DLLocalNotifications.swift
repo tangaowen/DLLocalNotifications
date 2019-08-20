@@ -38,9 +38,9 @@ public class DLNotificationScheduler {
     
     // Cancel the notification if scheduled or queued
     public func cancelNotification (notification: DLNotification) {
-        //only notification's local request not nil , remove pending notification
-        if notification.localNotificationRequest?.identifier != nil {
-            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [(notification.localNotificationRequest?.identifier)!])
+        //only notification's identify not nil , remove pending notification
+        if notification.identifier != nil {
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [(notification.identifier)!])
         }
 
         let queue = DLQueue.queue.notificationsQueue()
