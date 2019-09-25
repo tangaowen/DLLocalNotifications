@@ -148,8 +148,6 @@ public class DLNotificationScheduler {
     @discardableResult
     fileprivate func queueNotification (notification: DLNotification) -> String? {
         DLQueue.queue.push(notification)
-        DLQueue.queue.reSort()
-        
         return notification.identifier
     }
     
