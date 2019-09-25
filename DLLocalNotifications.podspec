@@ -2,7 +2,7 @@
 Pod::Spec.new do |s|
 
   s.name         = "DLLocalNotifications"
-  s.version      = "0.20"
+  s.version      = "0.21"
   s.summary      = "Local Notification Helper for User Notifications framework"
 
  
