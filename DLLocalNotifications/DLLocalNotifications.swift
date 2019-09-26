@@ -11,6 +11,8 @@ import UserNotifications
 
 let MAX_ALLOWED_NOTIFICATIONS = 64
 
+public typealias  DLEventClosureBool = (Bool) -> Void
+
 @available(iOS 10.0, *)
 public class DLNotificationScheduler {
     
@@ -153,7 +155,7 @@ public class DLNotificationScheduler {
         queueNotification(notification: notification)
     }
     
-    public func reScheduleAllNotifications() {
+    public func reScheduleAllNotifications(handle : @escaping DLEventClosureBool) {
         
         UNUserNotificationCenter.current().getPendingNotificationRequests(completionHandler: { (requests) in
             DLQueue.queue.reSort()
@@ -251,6 +253,7 @@ public class DLNotificationScheduler {
             }
             
             print("now \(alreadyScheduleRequestCount) notifications scheduled")
+            handle(true)
         })
     }
     
